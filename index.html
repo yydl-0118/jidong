@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="theme-color" content="#FFE4E9">
-<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="悸动">
 <link rel="manifest" href="manifest.json">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -1233,7 +1233,7 @@ function showSystemNotification(msg,force){
     else if(msg.type==='call') body=msg.content||'';
     if(body.length>120) body=body.slice(0,120)+'…';
     const title=data.partner.name||'新消息';
-    const icon=data.partner.avatar||'https://aka.doubaocdn.com/s/8rxMIY5T1q';
+    const icon=data.partner.avatar||'icon.png';
     if(_swReg&&_swReg.showNotification){
         try{ _swReg.showNotification(title,{body,icon,badge:icon,tag:'lingji-'+Date.now(),renotify:true,silent:true,data:{ts:Date.now()}}); return; }catch(e){}
     }
