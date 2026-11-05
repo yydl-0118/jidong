@@ -543,6 +543,7 @@ html,body{height:100%;width:100%;overflow:hidden;font-family:-apple-system,Blink
 </div>
 <div id="plusMenu">
     <div class="menu-item" onclick="openDivination()"><span class="mi-icon"><?xml version="1.0" encoding="UTF-8"?><svg width="1em" height="1em" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 7H16C20.4183 7 24 10.5817 24 15V42C24 38.6863 21.3137 36 18 36H5V7Z" fill="none" stroke="#333" stroke-width="4" stroke-linejoin="round"/><path d="M43 7H32C27.5817 7 24 10.5817 24 15V42C24 38.6863 26.6863 36 30 36H43V7Z" fill="none" stroke="#333" stroke-width="4" stroke-linejoin="round"/></svg></span><span>占卜</span></div>
+<div class="menu-item" onclick="openPlusPanel('chat')"><span class="mi-icon"><?xml version="1.0" encoding="UTF-8"?><svg width="24" height="24" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M25.5 37H21L11 42V37H4V7H44V18" stroke="#333" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="34" cy="28" r="6" fill="none" stroke="#333" stroke-width="4"/><path d="M39 32L44 36" stroke="#333" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 15H15L18 15" stroke="#333" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 21H18L24 21" stroke="#333" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span>聊天内容</span></div>
     <div class="menu-item" onclick="openClock()"><span class="mi-icon"><?xml version="1.0" encoding="UTF-8"?><svg width="24" height="24" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M21 38C30.3888 38 38 30.3888 38 21C38 11.6112 30.3888 4 21 4C11.6112 4 4 11.6112 4 21C4 30.3888 11.6112 38 21 38Z" fill="none" stroke="#333" stroke-width="4" stroke-linejoin="round"/><path d="M26.657 14.3431C25.2093 12.8954 23.2093 12 21.0001 12C18.791 12 16.791 12.8954 15.3433 14.3431" stroke="#333" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><path d="M33.2216 33.2217L41.7069 41.707" stroke="#333" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span>查岗</span></div>
     <div class="menu-item" onclick="openMusic()"><span class="mi-icon"><?xml version="1.0" encoding="UTF-8"?><svg width="24" height="24" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M24 4C12.9543 4 4 12.9543 4 24C4 35.0457 12.9543 44 24 44C35.0457 44 44 35.0457 44 24C44 21.2883 43.4603 18.7026 42.4825 16.3446C42.2308 15.7376 41.9501 15.1457 41.6421 14.5707" stroke="#333" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><path d="M35 10C37.2091 10 39 8.65685 39 7C39 5.34315 37.2091 4 35 4C32.7909 4 31 5.34315 31 7C31 8.65685 32.7909 10 35 10Z" fill="none" stroke="#333" stroke-width="4" stroke-linejoin="round"/><path d="M24 31C27.866 31 31 27.866 31 24C31 20.134 27.866 17 24 17C20.134 17 17 20.134 17 24C17 27.866 20.134 31 24 31Z" fill="none" stroke="#333" stroke-width="4" stroke-linejoin="round"/><path d="M31 6.5V24" stroke="#333" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span>音乐</span></div>
     <div class="menu-item" onclick="openLetter()"><span class="mi-icon"><?xml version="1.0" encoding="UTF-8"?><svg width="24" height="24" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 39H44V24V9H24H4V24V39Z" fill="none" stroke="#333" stroke-width="4" stroke-linejoin="round"/><path d="M4 9L24 24L44 9" stroke="#333" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><path d="M24 9H4V24" stroke="#333" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><path d="M44 24V9H24" stroke="#333" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span>信封</span><span class="menu-reddot" id="letterMenuDot"></span></div>
@@ -1392,7 +1393,11 @@ function renderMessagesNow(){
         area.innerHTML='<div class="empty-state" style="padding-top:60px;"><div class="empty-icon">💬</div><div>还没有消息，开始聊天吧</div></div>';
         void area.offsetHeight;area.classList.remove('no-anim');return;
     }
-    const startIdx=Math.max(0,msgs.length-150);
+    let startIdx=Math.max(0,msgs.length-150);
+if(window._pendingFocusMsgId){
+    const fi=msgs.findIndex(m=>m.id===window._pendingFocusMsgId);
+    if(fi>=0&&fi<startIdx) startIdx=Math.max(0,fi-20);
+}
     let html='',lastDate='';
     for(let i=startIdx;i<msgs.length;i++){
         const m=msgs[i];if(!m||!m.timestamp) continue;
@@ -1401,7 +1406,13 @@ function renderMessagesNow(){
         html+=buildMessageHtml(m,msgs);
     }
     area.classList.add('no-anim');area.innerHTML=html;void area.offsetHeight;area.classList.remove('no-anim');
+if(window._pendingFocusMsgId){
+    const fid=window._pendingFocusMsgId;
+    window._pendingFocusMsgId=null;
+    requestAnimationFrame(()=>{ jumpToMessage(fid); });
+}else{
     scrollToBottomImmediate();
+}
 }
 function appendMessageToDOM(msg){
     const area=document.getElementById('message-area');if(!area) return;
@@ -3723,6 +3734,104 @@ function toggleSetting(key){
     data.settings[key]=!data.settings[key];saveData();
     renderSettingsPage();
 }
+function renderChatContentPage(){
+    const body=document.getElementById('plusBody');if(!body) return;
+    const total=(data.messages||[]).length;
+    let html='<div class="plus-body-inner">';
+    html+='<div class="setting-item" style="flex-direction:column;align-items:stretch;gap:10px;">';
+    html+='<span class="label">清空聊天内容</span>';
+    html+='<button class="btn-danger" style="justify-content:center;" onclick="clearChatFromPanel()">🧹 清空全部聊天记录</button>';
+    html+='<div class="setting-sub">清空后不可恢复，字卡、表情、设置等不受影响</div>';
+    html+='</div>';
+    html+='<div class="setting-item" style="flex-direction:column;align-items:stretch;gap:10px;">';
+    html+='<span class="label">单独导出聊天内容</span>';
+    html+='<button class="btn-primary" style="justify-content:center;" onclick="exportChatOnly()">📤 导出聊天记录（JSON）</button>';
+    html+='<div class="setting-sub">当前共 '+total+' 条消息</div>';
+    html+='</div>';
+    html+='<div class="setting-item" style="flex-direction:column;align-items:stretch;gap:10px;">';
+    html+='<span class="label">搜索聊天内容</span>';
+    html+='<div class="wc-search-wrap" id="chatSearchWrap" style="margin-top:4px;"><span class="search-icon">🔍</span><input type="text" id="chatSearchInput" placeholder="搜索聊天记录..." oninput="onChatSearch(this.value)" autocomplete="off"><button class="clear-search" onclick="clearChatSearch()" type="button">✕</button></div>';
+    html+='<div id="chatSearchResults" style="margin-top:10px;"></div>';
+    html+='</div>';
+    html+='</div>';
+    body.innerHTML=html;
+}
+
+function clearChatFromPanel(){
+    clearChatOnly();
+    if(plusPanelOpen&&currentPlusTab==='chat') renderChatContentPage();
+}
+
+function exportChatOnly(){
+    const messages=data.messages||[];
+    if(!messages.length){showToast('还没有聊天记录');return;}
+    const payload={_type:'lingji_chat_only',_version:1,_exportedAt:new Date().toISOString(),messages};
+    const json=JSON.stringify(payload,null,2);
+    try{
+        const blob=new Blob([json],{type:'application/json'});
+        const url=URL.createObjectURL(blob);
+        const a=document.createElement('a');
+        a.href=url;
+        a.download='悸动_聊天记录_'+new Date().toISOString().slice(0,10)+'.json';
+        a.style.display='none';
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(()=>{try{document.body.removeChild(a);URL.revokeObjectURL(url);}catch(e){}},1500);
+        showToast('聊天记录已导出');
+        return;
+    }catch(e){}
+    showModal('导出聊天记录','<div class="setting-sub">下载失败，请点击"全选"后长按复制</div><textarea id="exportJsonText" rows="14" readonly style="width:100%;font-size:11px;font-family:ui-monospace,Menlo,monospace;">'+esc(json)+'</textarea><div class="modal-actions"><button class="btn-cancel" onclick="selectExportText()">全选</button><button class="btn-confirm" onclick="copyExportText()">复制</button><button class="btn-cancel" onclick="closeModal()">关闭</button></div>');
+}
+
+function onChatSearch(value){
+    const wrap=document.getElementById('chatSearchWrap');
+    if(wrap) wrap.classList.toggle('has-text',!!value);
+    const box=document.getElementById('chatSearchResults');
+    if(!box) return;
+    if(!value||!value.trim()){box.innerHTML='';return;}
+    box.innerHTML=renderChatSearchResults(value.trim());
+}
+
+function clearChatSearch(){
+    const inp=document.getElementById('chatSearchInput');if(inp)inp.value='';
+    const wrap=document.getElementById('chatSearchWrap');if(wrap)wrap.classList.remove('has-text');
+    const box=document.getElementById('chatSearchResults');if(box)box.innerHTML='';
+}
+
+function renderChatSearchResults(keyword){
+    const kw=keyword.toLowerCase();
+    const msgs=data.messages||[];
+    const matches=[];
+    msgs.forEach(m=>{
+        if(!m) return;
+        let text='';
+        if(m.type==='text'||m.type==='pat'||m.type==='music'||m.type==='call'||m.type==='recall'||m.type==='readno') text=m.content||'';
+        if(!text) return;
+        if(text.toLowerCase().indexOf(kw)>=0){
+            matches.push({id:m.id,text,type:m.type,timestamp:m.timestamp,sender:m.sender});
+        }
+    });
+    matches.sort((a,b)=>b.timestamp-a.timestamp);
+    let html='<div class="search-result-info"><span>找到 <b>'+matches.length+'</b> 条结果</span></div>';
+    if(matches.length===0){
+        html+='<div class="search-empty"><div style="font-size:36px;opacity:.4;margin-bottom:10px;">🔍</div><div>没有找到包含「'+esc(keyword)+'」的聊天记录</div></div>';
+        return html;
+    }
+    matches.slice(0,100).forEach(m=>{
+        const who=m.sender==='me'?'我':(data.partner.name||'对方');
+        html+='<div class="search-result-item" onclick="jumpToChatMessage(\''+m.id+'\')"><div class="sri-text"><div class="sri-word">'+highlightMatch(m.text,keyword)+'</div><div class="sri-group">'+esc(who)+' · '+formatDateTime(m.timestamp)+'</div></div><div class="sri-actions"><button title="跳转">↗</button></div></div>';
+    });
+    if(matches.length>100) html+='<div class="setting-sub" style="text-align:center;">仅显示最新 100 条结果</div>';
+    return html;
+}
+
+function jumpToChatMessage(id){
+    closePlusPanel();
+    const el=document.querySelector('.msg-group[data-id="'+id+'"]');
+    if(el){ jumpToMessage(id); return; }
+    window._pendingFocusMsgId=id;
+    renderMessagesNow();
+}
 function testSound(){const old=data.settings.soundEnabled;data.settings.soundEnabled=true;playNotifySound(true);data.settings.soundEnabled=old;}
 function testNotification(){
     if(!('Notification' in window)){showToast('当前环境不支持系统通知');return;}
@@ -4014,6 +4123,7 @@ function openPlusPanel(tab){
     const panel=document.getElementById('plusPanel');if(!panel) return;
     const title=document.getElementById('plusPanelTitle');
     if(currentPlusTab==='tools'){if(title)title.textContent='🛠️ 工具';panel.classList.add('open');renderPlusTools();}
+    else if(currentPlusTab==='chat'){if(title)title.textContent='💬 聊天内容';panel.classList.add('open');renderChatContentPage();}
     else{settingsPage='home';if(title)title.textContent='⚙️ 设置';panel.classList.add('open');renderSettingsPage();}
 }
 function closePlusPanel(){const panel=document.getElementById('plusPanel');if(panel)panel.classList.remove('open');plusPanelOpen=false;}
@@ -4275,7 +4385,8 @@ async function init(){
     'clockAddCard','clockDeleteCard','clockEditCard','ensureClockCards','migrateClockCards','getClockCards',
     'openClockBatchAdd','clockConfirmBatchAdd',
         'startKeepAliveAudio','stopKeepAliveAudio','updateKeepAliveUI','toggleKeepAlive',
-    'recallMyMessage','jumpToMessage','installPWA','showInstallHelp','registerSW','buildManualSection'];
+  'recallMyMessage','jumpToMessage','installPWA','showInstallHelp','registerSW','buildManualSection',
+'renderChatContentPage','clearChatFromPanel','exportChatOnly','onChatSearch','clearChatSearch','renderChatSearchResults','jumpToChatMessage'];
   names.forEach(function(n){
      try{if(typeof window[n]==='undefined'&&typeof eval(n)==='function'){window[n]=eval(n);}}catch(e){}
     });
