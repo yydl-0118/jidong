@@ -67,8 +67,13 @@ html,body{height:100%;width:100%;overflow:hidden;font-family:-apple-system,Blink
 .msg-bubble .time{display:none}
 .msg-group.other .msg-bubble .time{display:none}
 .msg-bubble .reply-ref{font-size:12px;opacity:.75;padding:4px 8px;background:rgba(0,0,0,.06);border-radius:6px;margin-bottom:6px;display:block;border-left:3px solid var(--primary-light);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:200px}
-.msg-bubble .msg-actions{display:none;gap:8px;margin-top:6px;justify-content:flex-end}
-.msg-bubble:hover .msg-actions{display:flex}
+/* 操作条：悬浮在气泡上方，点击气泡才出现 */
+.msg-bubble .msg-actions{display:none;position:absolute;bottom:calc(100% + 8px);right:0;gap:4px;align-items:center;padding:4px 6px;background:rgba(255,255,255,.98);border-radius:10px;box-shadow:0 2px 12px rgba(0,0,0,.15);z-index:30;white-space:nowrap;}
+.msg-group.other .msg-bubble .msg-actions{left:0;right:auto;}
+.msg-bubble .msg-actions.show{display:flex;}
+.msg-bubble .msg-actions.below{top:calc(100% + 8px);bottom:auto;}
+.msg-bubble .msg-actions button{background:none;border:none;font-size:12px;line-height:1.4;color:var(--text-light);cursor:pointer;padding:4px 8px;border-radius:6px;font-family:inherit;}
+.msg-bubble .msg-actions button:active{background:var(--bg);color:var(--text);}
 .msg-bubble.recall-bubble{cursor:pointer;user-select:none;}
 .msg-time-divider{text-align:center;font-size:11px;color:var(--text-light);padding:6px 0 2px;opacity:.7}
 .msg-time-divider span{background:rgba(0,0,0,.06);padding:2px 10px;border-radius:10px}
@@ -113,17 +118,22 @@ html,body{height:100%;width:100%;overflow:hidden;font-family:-apple-system,Blink
 
 .msg-bubble.emoji-bubble .msg-actions{
     position: absolute;
-    bottom: -24px;
+    bottom: calc(100% + 8px);
     right: 0;
-    background: rgba(255,255,255,.95);
-    border-radius: 6px;
-    padding: 2px 4px;
-    box-shadow: 0 1px 4px rgba(0,0,0,.1);
-    z-index: 3;
+    background: rgba(255,255,255,.98);
+    border-radius: 10px;
+    padding: 4px 6px;
+    box-shadow: 0 2px 12px rgba(0,0,0,.15);
+    z-index: 30;
     display: none;
+    white-space: nowrap;
+    align-items: center;
+    gap: 4px;
 }
-.msg-bubble.emoji-bubble:hover .msg-actions{display:flex}
-
+.msg-group.other .msg-bubble.emoji-bubble .msg-actions{left:0;right:auto;}
+.msg-bubble.emoji-bubble .msg-actions.show{display:flex}
+.msg-bubble.emoji-bubble .msg-actions.below{top:calc(100% + 8px);bottom:auto;}
+.msg-bubble.emoji-bubble .msg-actions button{background:none;border:none;font-size:12px;line-height:1.4;color:var(--text-light);cursor:pointer;padding:4px 8px;border-radius:6px;font-family:inherit;}
 .msg-bubble.emoji-bubble.has-reply{
     padding: 10px 14px;
     line-height: 1.5;
@@ -1331,6 +1341,7 @@ function buildMessageHtml(m,msgs){
     return '<div class="msg-group '+groupClass+'" data-id="'+m.id+'">'+sideHtml+'<div class="msg-body"><div class="'+bubbleClass+'" onclick="onBubbleClick(\''+m.id+'\')">'+autoBadge+contentHtml+'<div class="msg-actions">'+recallBtn+'<button onclick="event.stopPropagation();replyToMessage(\''+m.id+'\')">↩ 引用</button><button onclick="event.stopPropagation();deleteMessage(\''+m.id+'\')">🗑 删除</button></div></div></div></div>';
 }
 function toggleRecallMessage(el,msgId){
+    closeAllMsgActions();
     const m=(data.messages||[]).find(x=>x.id===msgId);if(!m) return;
     const isExpanded=el.dataset.expanded==='true';
     if(isExpanded){
@@ -4034,7 +4045,7 @@ function replyToMessage(id){
     if(txt)txt.textContent='回复 '+who+'：'+text;
     if(preview)preview.style.display='flex';
     const input=document.getElementById('msgInput');if(input)input.focus();
-    document.querySelectorAll('.msg-actions').forEach(a=>a.style.display='');
+     closeAllMsgActions();
 }
 function cancelReply(){currentReplyTarget=null;const preview=document.getElementById('replyPreview');if(preview)preview.style.display='none';}
 function deleteMessage(id){
@@ -4045,10 +4056,30 @@ function deleteMessage(id){
 function onBubbleClick(id){
     const group=document.querySelector('.msg-group[data-id="'+id+'"]');if(!group) return;
     const actions=group.querySelector('.msg-actions');if(!actions) return;
-    const isOpen=actions.style.display==='flex';
-    document.querySelectorAll('.msg-actions').forEach(a=>a.style.display='');
-    if(!isOpen) actions.style.display='flex';
+    const wasOpen=actions.classList.contains('show');
+    closeAllMsgActions();
+    if(wasOpen) return;            // 再点一次 => 收起
+    actions.classList.add('show');
+    // 若气泡太靠近顶部，操作条改到气泡下方，避免被裁掉
+    const area=document.getElementById('message-area');
+    const bubble=group.querySelector('.msg-bubble');
+    if(area&&bubble){
+        const ar=area.getBoundingClientRect();
+        const br=bubble.getBoundingClientRect();
+        if(br.top-ar.top<46) actions.classList.add('below');
+    }
 }
+function closeAllMsgActions(){
+    document.querySelectorAll('.msg-actions.show').forEach(function(a){
+        a.classList.remove('show');
+        a.classList.remove('below');
+    });
+}
+// 点击消息以外的地方自动收起
+document.addEventListener('click',function(e){
+    if(e.target.closest&&e.target.closest('.msg-bubble')) return;
+    closeAllMsgActions();
+},false);
 function toggleMorePanel(e){if(e){if(e.stopPropagation)e.stopPropagation();}const p=document.getElementById('morePanel');if(!p) return;p.classList.toggle('open');}
 function closeMorePanel(){const p=document.getElementById('morePanel');if(p)p.classList.remove('open');}
 function onMoreDecision(){closeMorePanel();showDecisionModal();}
